@@ -1,5 +1,8 @@
 
 
+import json
+
+
 def compensacion_suma(a: int, b: int):
     """
     Aplica la estrategia de compensación a la suma a + b.
@@ -22,6 +25,7 @@ def compensacion_suma(a: int, b: int):
         resultado = a + b
         return {
             "operacion_original": f"{a} + {b}",
+            "operandos": [a, b],
             "estrategia": "compensacion",
             "pasos": [],
             "resultado_final": resultado
@@ -70,11 +74,15 @@ def compensacion_suma(a: int, b: int):
         nuevo_b = b - ajuste_a  # Compensamos en el otro número
 
         direccion = "sumamos" if ajuste_a > 0 else "restamos"
+        otra_direccion = "sumamos" if direccion == "restamos" else "restamos"
         valor_abs = abs(ajuste_a)
         comentario = (
             f"Ajustamos {num_a_ajustar} a {decena_objetivo} "
-            f"({direccion} {valor_abs}) y compensamos el otro sumando."
+            f"({direccion} {valor_abs})"
+            f" y compensamos el otro sumando de {b} a {nuevo_b} "
+            f"({otra_direccion} {valor_abs})."
         )
+
     else:
         # Ajustamos 'b' a su decena más cercana
         num_a_ajustar = b
@@ -84,18 +92,22 @@ def compensacion_suma(a: int, b: int):
         nuevo_b = decena_b
 
         direccion = "sumamos" if ajuste_b > 0 else "restamos"
+        otra_direccion = "sumamos" if direccion == "restamos" else "restamos"
         valor_abs = abs(ajuste_b)
         comentario = (
             f"Ajustamos {num_a_ajustar} a {decena_objetivo} "
-            f"({direccion} {valor_abs}) y compensamos el otro sumando."
+            f"({direccion} {valor_abs})"
+            f" y compensamos el otro sumando de {a} a {nuevo_a} "
+            f"({otra_direccion} {valor_abs})."
         )
 
     pasos.append({
         "nivel": nivel,
         "ajuste": abs(ajuste),
         "direccion_ajuste": "superior" if ajuste > 0 else "inferior",
-        "numero_a_ajustar": num_a_ajustar,
+        "operando_a_ajustar": num_a_ajustar,
         "decena_objetivo": decena_objetivo,
+        "otro_operando": nuevo_b if num_a_ajustar == a else nuevo_a,
         "nueva_operacion": f"{nuevo_a} + {nuevo_b}",
         "comentario": comentario
     })
@@ -104,6 +116,7 @@ def compensacion_suma(a: int, b: int):
 
     return {
         "operacion_original": f"{original[0]} + {original[1]}",
+        "operandos": [original[0], original[1]],
         "estrategia": "compensacion",
         "pasos": pasos,
         "resultado_final": resultado_final
@@ -112,4 +125,4 @@ def compensacion_suma(a: int, b: int):
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    print(compensacion_suma(79, 25))
+    print(json.dumps(compensacion_suma(17, 78), indent=2, ensure_ascii=False))
