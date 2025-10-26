@@ -16,8 +16,9 @@ def compensacion_suma(a: int, b: int):
     resto_a = a % 10
     resto_b = b % 10
 
-    # Si ya son múltiplos de 10, no hay que ajustar nada.
-    if resto_a == 0 and resto_b == 0:
+    # Si al menos uno ya es múltiplo de 10, no hay que ajustar nada.
+    # El objetivo de la compensación es conseguir que UNO sea múltiplo de 10.
+    if resto_a == 0 or resto_b == 0:
         resultado = a + b
         return {
             "operacion_original": f"{a} + {b}",
@@ -30,7 +31,7 @@ def compensacion_suma(a: int, b: int):
     # y elegimos la más cercana
 
     # Para 'a':
-    dist_a_superior = 10 - resto_a if resto_a != 0 else 0
+    dist_a_superior = 10 - resto_a
     dist_a_inferior = resto_a
 
     if dist_a_inferior < dist_a_superior:
@@ -45,7 +46,7 @@ def compensacion_suma(a: int, b: int):
         decena_a = a + dist_a_superior
 
     # Para 'b':
-    dist_b_superior = 10 - resto_b if resto_b != 0 else 0
+    dist_b_superior = 10 - resto_b
     dist_b_inferior = resto_b
 
     if dist_b_inferior < dist_b_superior:
