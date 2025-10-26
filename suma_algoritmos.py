@@ -4,14 +4,15 @@ def compensacion_suma(a: int, b: int):
     """
     Aplica la estrategia de compensación a la suma a + b.
     Devuelve un diccionario con todos los pasos del razonamiento.
+
+    La función elige el número más cercano a una decena (superior o inferior)
+    y compensa el ajuste en el otro sumando para mantener la suma constante.
     """
     pasos = []
     original = (a, b)
     nivel = "decena"
 
-    # 1️⃣ Encontrar el número más cercano a una decena
-    # Decenas: si se dividen entre 10, el resto es 0
-    # Objetivo: calcular la diferencia al múltiplo de 10 superior
+    # 1️⃣ Calcular distancias a las decenas más cercanas (superior e inferior)
     resto_a = a % 10
     resto_b = b % 10
 
@@ -25,34 +26,75 @@ def compensacion_suma(a: int, b: int):
             "resultado_final": resultado
         }
 
-    # Seguimos: elegimos el número que esté más cerca del múltiplo de 10
-    dif_a = 10 - resto_a if resto_a != 0 else 0
-    dif_b = 10 - resto_b if resto_b != 0 else 0
+    # Para cada número, calculamos distancia a decena superior e inferior
+    # y elegimos la más cercana
 
-    if dif_a <= dif_b:
-        # Ajustamos 'a'
-        num_a_ajustar = a
-        ajuste = dif_a
-        nuevo_a = a + ajuste
-        nuevo_b = b - ajuste
+    # Para 'a':
+    dist_a_superior = 10 - resto_a if resto_a != 0 else 0
+    dist_a_inferior = resto_a
+
+    if dist_a_inferior < dist_a_superior:
+        # Más cerca de la decena inferior
+        dist_a = dist_a_inferior
+        ajuste_a = -dist_a_inferior  # Ajuste negativo (restar)
+        decena_a = a - dist_a_inferior
     else:
-        # Ajustamos 'b'
-        num_a_ajustar = b
-        ajuste = dif_b
-        nuevo_a = a - ajuste
-        nuevo_b = b + ajuste
+        # Más cerca de la decena superior
+        dist_a = dist_a_superior
+        ajuste_a = dist_a_superior  # Ajuste positivo (sumar)
+        decena_a = a + dist_a_superior
 
-    comentario = (
-        f"Ajustamos {num_a_ajustar} al múltiplo de 10 más cercano (+{ajuste}) "
-        f"y restamos {ajuste} al otro número."
-    )
+    # Para 'b':
+    dist_b_superior = 10 - resto_b if resto_b != 0 else 0
+    dist_b_inferior = resto_b
+
+    if dist_b_inferior < dist_b_superior:
+        # Más cerca de la decena inferior
+        dist_b = dist_b_inferior
+        ajuste_b = -dist_b_inferior  # Ajuste negativo (restar)
+        decena_b = b - dist_b_inferior
+    else:
+        # Más cerca de la decena superior
+        dist_b = dist_b_superior
+        ajuste_b = dist_b_superior  # Ajuste positivo (sumar)
+        decena_b = b + dist_b_superior
+
+    # 2️⃣ Elegimos el número con menor distancia a su decena más cercana
+    if dist_a <= dist_b:
+        # Ajustamos 'a' a su decena más cercana
+        num_a_ajustar = a
+        ajuste = ajuste_a
+        decena_objetivo = decena_a
+        nuevo_a = decena_a
+        nuevo_b = b - ajuste_a  # Compensamos en el otro número
+
+        direccion = "sumamos" if ajuste_a > 0 else "restamos"
+        valor_abs = abs(ajuste_a)
+        comentario = (
+            f"Ajustamos {num_a_ajustar} a {decena_objetivo} "
+            f"({direccion} {valor_abs}) y compensamos el otro sumando."
+        )
+    else:
+        # Ajustamos 'b' a su decena más cercana
+        num_a_ajustar = b
+        ajuste = ajuste_b
+        decena_objetivo = decena_b
+        nuevo_a = a - ajuste_b  # Compensamos en el otro número
+        nuevo_b = decena_b
+
+        direccion = "sumamos" if ajuste_b > 0 else "restamos"
+        valor_abs = abs(ajuste_b)
+        comentario = (
+            f"Ajustamos {num_a_ajustar} a {decena_objetivo} "
+            f"({direccion} {valor_abs}) y compensamos el otro sumando."
+        )
 
     pasos.append({
         "nivel": nivel,
-        "ajuste": ajuste,
+        "ajuste": abs(ajuste),
+        "direccion_ajuste": "superior" if ajuste > 0 else "inferior",
         "numero_a_ajustar": num_a_ajustar,
-        "nuevo_numero": nuevo_a if dif_a <= dif_b else nuevo_b,
-        "otro_numero": nuevo_b if dif_a <= dif_b else nuevo_a,
+        "decena_objetivo": decena_objetivo,
         "nueva_operacion": f"{nuevo_a} + {nuevo_b}",
         "comentario": comentario
     })
