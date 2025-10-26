@@ -1,0 +1,16 @@
+{
+    "operacion_original": "79 + 25",
+    "estrategia": "compensacion",
+    "pasos": [
+        {
+            "nivel": "decena",
+            "ajuste": 1,
+            "numero_a_ajustar": 79,
+            "nuevo_numero": 80,
+            "otro_numero": 24,
+            "nueva_operacion": "80 + 24",
+            "comentario": "Ajustamos 79 al múltiplo de 10 más cercano (+1) y restamos 1 al otro número."
+        }
+    ],
+    "resultado_final": 104
+}
