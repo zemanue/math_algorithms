@@ -1,19 +1,103 @@
 {
-    "operacion_original": "79 + 25",
-    "operandos": [79, 25],
-    "estrategia": "compensacion",
-    "pasos": [
-        {
-            "nivel": "decena",
-            "ajuste": 1,
-            "direccion_ajuste": "superior",
-            "operando_a_ajustar": 79,
-            "decena_objetivo": 80,
-            "otro_operando": 25,
-            "otro_operando_ajustado": 24,
-            "nueva_operacion": "80 + 24",
-            "comentario": "Ajustamos 79 al múltiplo de 10 más cercano (+1) y restamos 1 al otro número."
-        }
-    ],
-    "resultado_final": 104
+    "ejemplo_decena_superior": {
+        "operacion_original": "79 + 25",
+        "operandos": [
+            79,
+            25
+        ],
+        "estrategia": "compensacion",
+        "pasos": [
+            {
+                "nivel": "decena",
+                "transformacion": {
+                    "operando_principal": {
+                        "original": 79,
+                        "ajustado": 80,
+                        "ajuste": 1,
+                        "direccion": "superior"
+                    },
+                    "operando_compensado": {
+                        "original": 25,
+                        "ajustado": 24,
+                        "ajuste": -1,
+                        "direccion": "inferior"
+                    }
+                },
+                "nueva_operacion": "80 + 24",
+                "comentario": "Ajustamos 79 a 80 (sumamos 1) y compensamos el otro sumando de 25 a 24 (restamos 1)."
+            }
+        ],
+        "resultado_final": 104
+    },
+    "ejemplo_decena_inferior": {
+        "operacion_original": "21 + 26",
+        "operandos": [
+            21,
+            26
+        ],
+        "estrategia": "compensacion",
+        "pasos": [
+            {
+                "nivel": "decena",
+                "transformacion": {
+                    "operando_principal": {
+                        "original": 21,
+                        "ajustado": 20,
+                        "ajuste": -1,
+                        "direccion": "inferior"
+                    },
+                    "operando_compensado": {
+                        "original": 26,
+                        "ajustado": 27,
+                        "ajuste": 1,
+                        "direccion": "superior"
+                    }
+                },
+                "nueva_operacion": "20 + 27",
+                "comentario": "Ajustamos 21 a 20 (restamos 1) y compensamos el otro sumando de 26 a 27 (sumamos 1)."
+            }
+        ],
+        "resultado_final": 47
+    },
+    "ejemplo_centena": {
+        "operacion_original": "198 + 145",
+        "operandos": [
+            198,
+            145
+        ],
+        "estrategia": "compensacion",
+        "pasos": [
+            {
+                "nivel": "centena",
+                "transformacion": {
+                    "operando_principal": {
+                        "original": 198,
+                        "ajustado": 200,
+                        "ajuste": 2,
+                        "direccion": "superior"
+                    },
+                    "operando_compensado": {
+                        "original": 145,
+                        "ajustado": 143,
+                        "ajuste": -2,
+                        "direccion": "inferior"
+                    }
+                },
+                "nueva_operacion": "200 + 143",
+                "comentario": "Ajustamos 198 a 200 (sumamos 2) y compensamos el otro sumando de 145 a 143 (restamos 2)."
+            }
+        ],
+        "resultado_final": 343
+    },
+    "ejemplo_sin_compensacion_necesaria": {
+        "operacion_original": "30 + 17",
+        "operandos": [
+            30,
+            17
+        ],
+        "estrategia": "compensacion",
+        "pasos": [],
+        "resultado_final": 47,
+        "nota": "No se requiere compensación porque 30 ya es múltiplo de 10"
+    }
 }
