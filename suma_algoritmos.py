@@ -128,10 +128,12 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
         a: Primer operando
         b: Segundo operando
         nivel: "decena", "centena", "unidad_de_millar" o "auto" (por defecto)
-               - "auto": detecta automáticamente según magnitud
-                 * < 100: usa decenas
-                 * >= 100 y < 1000: usa centenas
-                 * >= 1000: usa unidades de millar
+               - "auto": detecta automáticamente de forma progresiva:
+                 1. Si algún operando es múltiplo de 100 Y suma >= 1000
+                    → usa unidades de millar
+                 2. Si algún operando es múltiplo de 10 Y suma >= 100
+                    → usa centenas
+                 3. En caso contrario → usa decenas
                - "decena": fuerza compensación a múltiplos de 10
                - "centena": fuerza compensación a múltiplos de 100
                - "unidad_de_millar": fuerza compensación a múltiplos de 1000
@@ -145,14 +147,24 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
 
     # Determinar divisor según nivel especificado
     if nivel == "auto":
-        # Auto-detección basada en el orden de magnitud del mayor operando
-        max_valor = max(a, b)
-        if max_valor >= 1000:
-            divisor = 1000  # Unidades de millar
-        elif max_valor >= 100:
-            divisor = 100   # Centenas
+        # Auto-detección inteligente: escalar progresivamente según mérito
+        suma_total = a + b
+
+        # NIVEL 1: ¿Merece compensar a UNIDADES DE MILLAR?
+        # Condición: algún operando es múltiplo de 100 Y suma >= 1000
+        if (a % 100 == 0 or b % 100 == 0) and suma_total >= 1000:
+            divisor = 1000
+
+        # NIVEL 2: ¿Merece compensar a CENTENAS?
+        # Condición: algún operando es múltiplo de 10 Y suma >= 100
+        elif (a % 10 == 0 or b % 10 == 0) and suma_total >= 100:
+            divisor = 100
+
+        # NIVEL 3: DECENAS (por defecto)
+        # Siempre se intenta si los niveles superiores no aplican
         else:
-            divisor = 10    # Decenas
+            divisor = 10
+
     elif nivel == "decena":
         divisor = 10
     elif nivel == "centena":
@@ -204,27 +216,47 @@ if __name__ == "__main__":
     print("\n3️⃣ Sin compensación: 30 + 17")
     print(json.dumps(compensacion_suma(30, 17), indent=2, ensure_ascii=False))
 
-    # Ejemplo 4: Centena
-    print("\n4️⃣ Centena: 178 + 145")
-    resultado = compensacion_suma(178, 145)
-    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+    # Ejemplo 4: Múltiplo de 10, suma >= 100 → compensa a centena
+    print("\n4️⃣ Auto-detección centena: 70 + 63")
+    print(json.dumps(compensacion_suma(70, 63), indent=2, ensure_ascii=False))
 
-    # Ejemplo 5: Unidades de millar
-    print("\n5️⃣ Unidad de millar: 1887 + 1453")
-    resultado = compensacion_suma(1887, 1453)
-    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+    # Ejemplo 5: Múltiplo de 10, pero suma < 100 → NO compensa
+    print("\n5️⃣ No merece compensar: 20 + 27")
+    print(json.dumps(compensacion_suma(20, 27), indent=2, ensure_ascii=False))
 
-    # Ejemplo 6: Forzar nivel decena en números grandes
-    print("\n6️⃣ Forzar decena en 178 + 145:")
-    print(json.dumps(compensacion_suma(178, 145, nivel="decena"),
-                     indent=2, ensure_ascii=False))
-    
+    # Ejemplo 6: Múltiplo de 100, suma >= 1000 → compensa a millar
+    print("\n6️⃣ Auto-detección millar: 1900 + 1442")
+    print(json.dumps(
+        compensacion_suma(1900, 1442), indent=2, ensure_ascii=False
+    ))
+
+    # Ejemplo 7: Progresivo - primera aplicación a decena
+    print("\n7️⃣ Progresivo (paso 1): 1887 + 1455")
+    print(json.dumps(
+        compensacion_suma(1887, 1455), indent=2, ensure_ascii=False
+    ))
+
+    # Ejemplo 8: Edge case 90 + 15
+    print("\n8️⃣ Edge case: 90 + 15")
+    print(json.dumps(compensacion_suma(90, 15), indent=2, ensure_ascii=False))
+
+    # Ejemplo 9: Múltiplo de 100 pero suma < 1000
+    print("\n9️⃣ No merece millar: 200 + 103")
+    print(json.dumps(
+        compensacion_suma(200, 103), indent=2, ensure_ascii=False
+    ))
+
     # Ejemplo 7: Forzar nivel centena en números pequeños
     print("\n7️⃣ Forzar centena en 78 + 45:")
     print(json.dumps(compensacion_suma(78, 45, nivel="centena"),
                      indent=2, ensure_ascii=False))
-    
+
     # Ejemplo 8: Sumandos de diferentes órdenes de magnitud
     print("\n8️⃣ Diferentes órdenes de magnitud: 945 + 46:")
     print(json.dumps(compensacion_suma(945, 46),
+                     indent=2, ensure_ascii=False))
+
+    # Ejemplo 9: Sin compensación necesaria a nivel unidad de millar
+    print("\n9️⃣ Sin compensación necesaria a nivel unidad de millar:")
+    print(json.dumps(compensacion_suma(1000, 2000),
                      indent=2, ensure_ascii=False))
