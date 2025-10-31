@@ -1,156 +1,167 @@
-
 import json
+from typing import Optional
 
 
-def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
+def _calcular_ajuste_optimo(
+        valor: int, divisor: int) -> int:
     """
-    Aplica la estrategia de compensación a la suma a + b.
-    Devuelve un diccionario con todos los pasos del razonamiento.
-
-    La función elige el número más cercano a un múltiplo de 10 o 100
-    (decena o centena) y compensa el ajuste en el otro sumando
-    para mantener la suma constante.
+    Calcula el mejor ajuste (superior o inferior) para un valor dado.
 
     Args:
-        a: Primer operando
-        b: Segundo operando
-        nivel: "decena", "centena" o "auto" (detecta automáticamente)
+        valor: Número a ajustar
+        divisor: Múltiplo objetivo (10, 100, etc.)
 
     Returns:
-        Diccionario con la estructura completa de la compensación
+        - ajuste óptimo (positivo o negativo)
     """
-    pasos = []
-    original = (a, b)
+    resto = valor % divisor
+    dist_inferior = resto
+    dist_superior = divisor - resto
 
-    # Determinar el nivel de compensación automáticamente
-    if nivel == "auto":
-        # Si algún número tiene 3+ dígitos, intentar centena
-        if a >= 100 or b >= 100:
-            nivel = "centena"
-        else:
-            nivel = "decena"
+    # Elegir el múltiplo más cercano
+    if dist_inferior < dist_superior:
+        return -dist_inferior
+    else:
+        return dist_superior
 
-    # Configurar el divisor según el nivel
-    divisor = 10 if nivel == "decena" else 100
 
-    # 1️⃣ Calcular restos
+def _aplicar_compensacion(a: int, b: int, divisor: int) -> Optional[dict]:
+    """
+    Aplica compensación para un nivel específico (decena, centena, etc.).
+
+    Estrategia: ajustar el operando más cercano a un múltiplo del divisor
+    y compensar el ajuste en el otro operando para mantener la suma igual.
+
+    Args:
+        a, b: Operandos actuales
+        divisor: 10 (decenas), 100 (centenas), 1000 (millares), etc.
+
+    Returns:
+        Dict con el paso de compensación, o None si no se requiere
+    """
+    # Mapeo automático de divisor a nombre de nivel
+    nivel_nombre = {
+        10: "decena",
+        100: "centena",
+        1000: "unidad_de_millar"
+    }.get(divisor, f"multiplo_de_{divisor}")
+
     resto_a = a % divisor
     resto_b = b % divisor
 
-    # Si al menos uno ya es múltiplo del divisor, no hay que ajustar nada.
-    # El objetivo de la compensación es conseguir que UNO sea múltiplo.
+    # Si al menos uno ya es múltiplo, no se requiere compensación
     if resto_a == 0 or resto_b == 0:
-        resultado = a + b
-        return {
-            "operacion_original": f"{a} + {b}",
-            "operandos": [a, b],
-            "estrategia": "compensacion",
-            "pasos": [],
-            "resultado_final": resultado
-        }
+        return None
 
-    # 2️⃣ Para cada número, calculamos distancia al múltiplo
-    # superior e inferior y elegimos la más cercana
+    # Calcular mejor ajuste para cada operando
+    ajuste_a = _calcular_ajuste_optimo(a, divisor)
+    ajuste_b = _calcular_ajuste_optimo(b, divisor)
 
-    # Para 'a':
-    dist_a_superior = divisor - resto_a
-    dist_a_inferior = resto_a
-
-    if dist_a_inferior < dist_a_superior:
-        # Más cerca del múltiplo inferior
-        dist_a = dist_a_inferior
-        ajuste_a = -dist_a_inferior  # Ajuste negativo (restar)
-        multiplo_a = a - dist_a_inferior
-        direccion_a = "inferior"
-    else:
-        # Más cerca del múltiplo superior
-        dist_a = dist_a_superior
-        ajuste_a = dist_a_superior  # Ajuste positivo (sumar)
-        multiplo_a = a + dist_a_superior
-        direccion_a = "superior"
-
-    # Para 'b':
-    dist_b_superior = divisor - resto_b
-    dist_b_inferior = resto_b
-
-    if dist_b_inferior < dist_b_superior:
-        # Más cerca del múltiplo inferior
-        dist_b = dist_b_inferior
-        ajuste_b = -dist_b_inferior  # Ajuste negativo (restar)
-        multiplo_b = b - dist_b_inferior
-        direccion_b = "inferior"
-    else:
-        # Más cerca del múltiplo superior
-        dist_b = dist_b_superior
-        ajuste_b = dist_b_superior  # Ajuste positivo (sumar)
-        multiplo_b = b + dist_b_superior
-        direccion_b = "superior"
-
-    # 3️⃣ Elegimos el número con menor distancia a su múltiplo más cercano
-    if dist_a <= dist_b:
-        # Ajustamos 'a' a su múltiplo más cercano
-        operando_principal_orig = a
-        operando_principal_ajustado = multiplo_a
+    # Elegir el ajuste con menos distancia al múltiplo (menor valor absoluto)
+    if abs(ajuste_a) <= abs(ajuste_b):
+        # Ajustar 'a', compensar 'b'
+        principal_orig = a
+        principal_ajustado = a + ajuste_a
         ajuste_principal = ajuste_a
-        direccion_principal = direccion_a
 
-        operando_compensado_orig = b
-        operando_compensado_ajustado = b - ajuste_a  # Compensación inversa
+        compensado_orig = b
+        compensado_ajustado = b - ajuste_a
         ajuste_compensado = -ajuste_a
-        direccion_compensada = "inferior" if ajuste_a > 0 else "superior"
 
-        nuevo_a = operando_principal_ajustado
-        nuevo_b = operando_compensado_ajustado
-
+        nuevo_a, nuevo_b = principal_ajustado, compensado_ajustado
     else:
-        # Ajustamos 'b' a su múltiplo más cercano
-        operando_principal_orig = b
-        operando_principal_ajustado = multiplo_b
+        # Ajustar 'b', compensar 'a'
+        principal_orig = b
+        principal_ajustado = b + ajuste_b
         ajuste_principal = ajuste_b
-        direccion_principal = direccion_b
 
-        operando_compensado_orig = a
-        operando_compensado_ajustado = a - ajuste_b  # Compensación inversa
+        compensado_orig = a
+        compensado_ajustado = a - ajuste_b
         ajuste_compensado = -ajuste_b
-        direccion_compensada = "inferior" if ajuste_b > 0 else "superior"
 
-        nuevo_a = operando_compensado_ajustado
-        nuevo_b = operando_principal_ajustado
+        nuevo_a, nuevo_b = compensado_ajustado, principal_ajustado
 
-    # 4️⃣ Construir comentario
+    # Generar comentario explicativo
     verbo_principal = "sumamos" if ajuste_principal > 0 else "restamos"
     verbo_compensado = "restamos" if ajuste_principal > 0 else "sumamos"
     valor_abs = abs(ajuste_principal)
 
     comentario = (
-        f"Ajustamos {operando_principal_orig} a "
-        f"{operando_principal_ajustado} ({verbo_principal} {valor_abs}) "
-        f"y compensamos el otro sumando de {operando_compensado_orig} a "
-        f"{operando_compensado_ajustado} ({verbo_compensado} {valor_abs})."
+        f"Ajustamos {principal_orig} a {principal_ajustado} "
+        f"({verbo_principal} {valor_abs}) y compensamos el otro sumando "
+        f"de {compensado_orig} a {compensado_ajustado} "
+        f"({verbo_compensado} {valor_abs})."
     )
 
-    # 5️⃣ Construir el paso con la estructura
-    pasos.append({
-        "nivel": nivel,
+    return {
+        "nivel": nivel_nombre,
         "transformacion": {
             "operando_principal": {
-                "original": operando_principal_orig,
-                "ajustado": operando_principal_ajustado,
+                "original": principal_orig,
+                "ajustado": principal_ajustado,
                 "ajuste": ajuste_principal,
-                "direccion": direccion_principal
             },
             "operando_compensado": {
-                "original": operando_compensado_orig,
-                "ajustado": operando_compensado_ajustado,
+                "original": compensado_orig,
+                "ajustado": compensado_ajustado,
                 "ajuste": ajuste_compensado,
-                "direccion": direccion_compensada
             }
         },
         "nueva_operacion": f"{nuevo_a} + {nuevo_b}",
-        "comentario": comentario
-    })
+        "comentario": comentario,
+        "nuevos_valores": (nuevo_a, nuevo_b)
+    }
 
-    resultado_final = nuevo_a + nuevo_b
+
+def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
+    """
+    Aplica la estrategia de compensación a la suma a + b.
+
+    Estrategia mental: transforma la suma en una equivalente más fácil
+    ajustando un operando a un múltiplo redondo (10, 100, etc.) y
+    compensando el cambio en el otro operando.
+
+    Ejemplo: 79 + 25 → 80 + 24 = 104
+             (ajusto +1)  (compenso -1)
+
+    Args:
+        a: Primer operando
+        b: Segundo operando
+        nivel: "decena", "centena" o "auto" (detecta automáticamente)
+               - "auto": usa decena si ambos < 100, centena si alguno >= 100
+               - "decena": fuerza compensación a múltiplos de 10
+               - "centena": fuerza compensación a múltiplos de 100
+
+    Returns:
+        Dict con la operación original, estrategia usada, pasos detallados
+        y resultado final
+    """
+    pasos = []
+    original = (a, b)
+
+    # Determinar divisor según nivel especificado
+    if nivel == "auto":
+        # Auto-detección: centenas para números grandes, decenas para pequeños
+        divisor = 100 if (a >= 100 or b >= 100) else 10
+    elif nivel == "decena":
+        divisor = 10
+    elif nivel == "centena":
+        divisor = 100
+    else:
+        raise ValueError(f"Nivel '{nivel}' no válido. "
+                         f"Use 'auto', 'decena' o 'centena'.")
+
+    # Aplicar compensación con el divisor seleccionado
+    paso = _aplicar_compensacion(a, b, divisor)
+
+    if paso:
+        # Extraer nuevos valores y limpiar campo auxiliar
+        nuevos_valores = paso.pop("nuevos_valores")
+        pasos.append(paso)
+        resultado_final = nuevos_valores[0] + nuevos_valores[1]
+    else:
+        # No se requiere compensación (uno ya es múltiplo)
+        resultado_final = a + b
 
     return {
         "operacion_original": f"{original[0]} + {original[1]}",
@@ -164,7 +175,7 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
 # Ejemplo de uso
 if __name__ == "__main__":
     print("=" * 70)
-    print("EJEMPLOS DE COMPENSACIÓN EN SUMA (VERSIÓN SIMPLE)")
+    print("EJEMPLOS DE COMPENSACIÓN EN SUMA")
     print("=" * 70)
 
     # Ejemplo 1: Decena superior
@@ -175,16 +186,16 @@ if __name__ == "__main__":
     print("\n2️⃣ Decena inferior: 21 + 26")
     print(json.dumps(compensacion_suma(21, 26), indent=2, ensure_ascii=False))
 
-    # Ejemplo 3: Centena (un solo paso)
-    print("\n3️⃣ Centena: 198 + 145")
-    resultado = compensacion_suma(198, 145)
-    print(json.dumps(resultado, indent=2, ensure_ascii=False))
-
-    # Ejemplo 4: Sin compensación necesaria
-    print("\n4️⃣ Sin compensación: 30 + 17")
+    # Ejemplo 3: Sin compensación necesaria
+    print("\n3️⃣ Sin compensación: 30 + 17")
     print(json.dumps(compensacion_suma(30, 17), indent=2, ensure_ascii=False))
 
-    # Ejemplo 5: Forzar nivel decena
-    print("\n5️⃣ Forzar decena en 198 + 145:")
-    print(json.dumps(compensacion_suma(198, 145, nivel="decena"),
+    # Ejemplo 4: Centena
+    print("\n4️⃣ Centena: 178 + 145")
+    resultado = compensacion_suma(178, 145)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+
+    # Ejemplo 5: Forzar nivel decena en números grandes
+    print("\n5️⃣ Forzar decena en 178 + 145:")
+    print(json.dumps(compensacion_suma(178, 145, nivel="decena"),
                      indent=2, ensure_ascii=False))

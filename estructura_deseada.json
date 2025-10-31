@@ -13,14 +13,12 @@
                     "operando_principal": {
                         "original": 79,
                         "ajustado": 80,
-                        "ajuste": 1,
-                        "direccion": "superior"
+                        "ajuste": 1
                     },
                     "operando_compensado": {
                         "original": 25,
                         "ajustado": 24,
-                        "ajuste": -1,
-                        "direccion": "inferior"
+                        "ajuste": -1
                     }
                 },
                 "nueva_operacion": "80 + 24",
@@ -43,14 +41,12 @@
                     "operando_principal": {
                         "original": 21,
                         "ajustado": 20,
-                        "ajuste": -1,
-                        "direccion": "inferior"
+                        "ajuste": -1
                     },
                     "operando_compensado": {
                         "original": 26,
                         "ajustado": 27,
-                        "ajuste": 1,
-                        "direccion": "superior"
+                        "ajuste": 1
                     }
                 },
                 "nueva_operacion": "20 + 27",
@@ -73,14 +69,12 @@
                     "operando_principal": {
                         "original": 198,
                         "ajustado": 200,
-                        "ajuste": 2,
-                        "direccion": "superior"
+                        "ajuste": 2
                     },
                     "operando_compensado": {
                         "original": 145,
                         "ajustado": 143,
-                        "ajuste": -2,
-                        "direccion": "inferior"
+                        "ajuste": -2
                     }
                 },
                 "nueva_operacion": "200 + 143",
