@@ -2,6 +2,34 @@ import json
 from typing import Optional
 
 
+def _calcular_peso_ajuste(ajuste: int) -> float:
+    """
+    Calcula un peso que determina la facilidad de cálculo mental.
+
+    Estrategia: Los ajustes múltiplos de 10 son más fáciles de calcular
+    mentalmente, por lo que reciben un bonus (peso reducido).
+
+    Ejemplos:
+    - ajuste = 30 (múltiplo de 10) → peso = 15 (30 * 0.5)
+    - ajuste = 17 (no múltiplo)    → peso = 17 (sin bonus)
+
+    Args:
+        ajuste: Valor del ajuste a evaluar
+
+    Returns:
+        Peso del ajuste (menor peso = más fácil de calcular)
+    """
+    peso = abs(ajuste)
+
+    # BONUS: Si el ajuste es múltiplo de 10 (10, 20, 30, 100...),
+    # aplicamos un 50% de descuento en el peso porque es más fácil
+    # de calcular mentalmente (ej: +30 es más fácil que +17)
+    if ajuste != 0 and ajuste % 10 == 0:
+        peso *= 0.5  # Bonus del 50%
+
+    return peso
+
+
 def _calcular_ajuste_optimo(
         valor: int, divisor: int) -> int:
     """
@@ -53,12 +81,34 @@ def _aplicar_compensacion(a: int, b: int, divisor: int) -> Optional[dict]:
     if resto_a == 0 or resto_b == 0:
         return None
 
-    # Calcular mejor ajuste para cada operando
+    # Calcular mejor ajuste para cada operando (al múltiplo más cercano)
     ajuste_a = _calcular_ajuste_optimo(a, divisor)
     ajuste_b = _calcular_ajuste_optimo(b, divisor)
 
-    # Elegir el ajuste con menos distancia al múltiplo (menor valor absoluto)
-    if abs(ajuste_a) <= abs(ajuste_b):
+    # =======================================================================
+    # SELECCIÓN INTELIGENTE DEL AJUSTE
+    # =======================================================================
+    # No siempre el ajuste más pequeño es el más fácil mentalmente.
+    # Ejemplo: 70 + 83
+    #   - Ajustar 70→100 requiere +30 (múltiplo de 10, fácil)
+    #   - Ajustar 83→100 requiere +17 (más pequeño, pero más difícil)
+    #
+    # Solución: Calculamos un "peso" que considera:
+    #   1. La magnitud del ajuste (menor es mejor)
+    #   2. Si es múltiplo de 10 (bonus del 50%)
+    #
+    # Ejemplos de pesos:
+    #   - ajuste +30 (×10) → peso 15 (30 * 0.5)
+    #   - ajuste +17       → peso 17 (sin bonus)
+    #   - ajuste +1        → peso 1  (muy pequeño, gana siempre)
+    #   - ajuste +400 (×10)→ peso 200 (grande, pierde ante +41)
+    # =======================================================================
+
+    peso_a = _calcular_peso_ajuste(ajuste_a)
+    peso_b = _calcular_peso_ajuste(ajuste_b)
+
+    # Elegir el ajuste con MENOR PESO (más fácil de calcular)
+    if peso_a <= peso_b:
         # Ajustar 'a', compensar 'b'
         principal_orig = a
         principal_ajustado = a + ajuste_a
@@ -113,30 +163,35 @@ def _aplicar_compensacion(a: int, b: int, divisor: int) -> Optional[dict]:
     }
 
 
-def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
+def compensacion_base10_suma(a: int, b: int, nivel: str = "auto") -> dict:
     """
-    Aplica la estrategia de compensación a la suma a + b.
+    Aplica la estrategia de compensación en base 10 a la suma a + b.
 
     Estrategia mental: transforma la suma en una equivalente más fácil
+    ajustando un operando a un múltiplo redondo de base 10 (10, 100, 1000)
+    y compensando el cambio en el otro operando.
+
+    Ejemplo: 79 + 25 → 80 + 24 = 104
+            (ajusto +1)  (compenso -1)
     ajustando un operando a un múltiplo redondo (10, 100, etc.) y
     compensando el cambio en el otro operando.
 
     Ejemplo: 79 + 25 → 80 + 24 = 104
-             (ajusto +1)  (compenso -1)
+            (ajusto +1)  (compenso -1)
 
     Args:
         a: Primer operando
         b: Segundo operando
         nivel: "decena", "centena", "unidad_de_millar" o "auto" (por defecto)
-               - "auto": detecta automáticamente de forma progresiva:
-                 1. Si algún operando es múltiplo de 100 Y suma >= 1000
-                    → usa unidades de millar
-                 2. Si algún operando es múltiplo de 10 Y suma >= 100
-                    → usa centenas
-                 3. En caso contrario → usa decenas
-               - "decena": fuerza compensación a múltiplos de 10
-               - "centena": fuerza compensación a múltiplos de 100
-               - "unidad_de_millar": fuerza compensación a múltiplos de 1000
+                - "auto": detecta automáticamente de forma progresiva:
+                    1. Si algún operando es múltiplo de 100 Y suma >= 1000
+                        → usa unidades de millar
+                    2. Si algún operando es múltiplo de 10 Y suma >= 100
+                        → usa centenas
+                    3. En caso contrario → usa decenas
+                - "decena": fuerza compensación a múltiplos de 10
+                - "centena": fuerza compensación a múltiplos de 100
+                - "unidad_de_millar": fuerza compensación a múltiplos de 1000
 
     Returns:
         Dict con la operación original, estrategia usada, pasos detallados
@@ -192,7 +247,7 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
     return {
         "operacion_original": f"{original[0]} + {original[1]}",
         "operandos": [original[0], original[1]],
-        "estrategia": "compensacion",
+        "estrategia": "compensacion_base10",
         "pasos": pasos,
         "resultado_final": resultado_final
     }
@@ -201,62 +256,53 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
 # Ejemplo de uso
 if __name__ == "__main__":
     print("=" * 70)
-    print("EJEMPLOS DE COMPENSACIÓN EN SUMA")
+    print("EJEMPLOS DE COMPENSACIÓN BASE 10 EN SUMA")
     print("=" * 70)
 
     # Ejemplo 1: Decena superior
     print("\n1️⃣ Decena superior: 79 + 25")
-    print(json.dumps(compensacion_suma(79, 25), indent=2, ensure_ascii=False))
+    resultado = compensacion_base10_suma(79, 25)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
     # Ejemplo 2: Decena inferior
     print("\n2️⃣ Decena inferior: 21 + 26")
-    print(json.dumps(compensacion_suma(21, 26), indent=2, ensure_ascii=False))
+    resultado = compensacion_base10_suma(21, 26)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
     # Ejemplo 3: Sin compensación necesaria
     print("\n3️⃣ Sin compensación: 30 + 17")
-    print(json.dumps(compensacion_suma(30, 17), indent=2, ensure_ascii=False))
+    resultado = compensacion_base10_suma(30, 17)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 4: Múltiplo de 10, suma >= 100 → compensa a centena
-    print("\n4️⃣ Auto-detección centena: 70 + 63")
-    print(json.dumps(compensacion_suma(70, 63), indent=2, ensure_ascii=False))
+    # Ejemplo 4: CASO INTERESANTE - Prioridad a múltiplo de 10
+    print("\n4️⃣ Prioridad múltiplo de 10: 70 + 83")
+    print("   (Ajuste +30 gana sobre +17 por ser múltiplo de 10)")
+    resultado = compensacion_base10_suma(70, 83)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 5: Múltiplo de 10, pero suma < 100 → NO compensa
-    print("\n5️⃣ No merece compensar: 20 + 27")
-    print(json.dumps(compensacion_suma(20, 27), indent=2, ensure_ascii=False))
+    # Ejemplo 5: CASO INTERESANTE - Ajuste pequeño gana
+    print("\n5️⃣ Ajuste pequeño gana: 199 + 220")
+    print("   (Ajuste +1 gana sobre -20 por ser mucho menor)")
+    resultado = compensacion_base10_suma(199, 220)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 6: Múltiplo de 100, suma >= 1000 → compensa a millar
-    print("\n6️⃣ Auto-detección millar: 1900 + 1442")
-    print(json.dumps(
-        compensacion_suma(1900, 1442), indent=2, ensure_ascii=False
-    ))
+    # Ejemplo 6: CASO INTERESANTE - Ajuste pequeño gana sobre grande
+    print("\n6️⃣ Ajuste pequeño vs grande: 1600 + 7041")
+    print("   (Ajuste +41 gana sobre +400 aunque 400 sea múltiplo)")
+    resultado = compensacion_base10_suma(1600, 7041)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 7: Progresivo - primera aplicación a decena
-    print("\n7️⃣ Progresivo (paso 1): 1887 + 1455")
-    print(json.dumps(
-        compensacion_suma(1887, 1455), indent=2, ensure_ascii=False
-    ))
+    # Ejemplo 7: Múltiplo de 10, pero suma < 100 → NO compensa
+    print("\n7️⃣ No merece compensar: 20 + 27")
+    resultado = compensacion_base10_suma(20, 27)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 8: Edge case 90 + 15
-    print("\n8️⃣ Edge case: 90 + 15")
-    print(json.dumps(compensacion_suma(90, 15), indent=2, ensure_ascii=False))
+    # Ejemplo 8: Múltiplo de 100, suma >= 1000 → compensa a millar
+    print("\n8️⃣ Auto-detección millar: 1900 + 1442")
+    resultado = compensacion_base10_suma(1900, 1442)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 9: Múltiplo de 100 pero suma < 1000
-    print("\n9️⃣ No merece millar: 200 + 103")
-    print(json.dumps(
-        compensacion_suma(200, 103), indent=2, ensure_ascii=False
-    ))
-
-    # Ejemplo 7: Forzar nivel centena en números pequeños
-    print("\n7️⃣ Forzar centena en 78 + 45:")
-    print(json.dumps(compensacion_suma(78, 45, nivel="centena"),
-                     indent=2, ensure_ascii=False))
-
-    # Ejemplo 8: Sumandos de diferentes órdenes de magnitud
-    print("\n8️⃣ Diferentes órdenes de magnitud: 945 + 46:")
-    print(json.dumps(compensacion_suma(945, 46),
-                     indent=2, ensure_ascii=False))
-
-    # Ejemplo 9: Sin compensación necesaria a nivel unidad de millar
-    print("\n9️⃣ Sin compensación necesaria a nivel unidad de millar:")
-    print(json.dumps(compensacion_suma(1000, 2000),
-                     indent=2, ensure_ascii=False))
+    # Ejemplo 9: Progresivo - primera aplicación a decena
+    print("\n9️⃣ Progresivo (paso 1): 1887 + 1455")
+    resultado = compensacion_base10_suma(1887, 1455)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
