@@ -127,10 +127,14 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
     Args:
         a: Primer operando
         b: Segundo operando
-        nivel: "decena", "centena" o "auto" (detecta automáticamente)
-               - "auto": usa decena si ambos < 100, centena si alguno >= 100
+        nivel: "decena", "centena", "unidad_de_millar" o "auto" (por defecto)
+               - "auto": detecta automáticamente según magnitud
+                 * < 100: usa decenas
+                 * >= 100 y < 1000: usa centenas
+                 * >= 1000: usa unidades de millar
                - "decena": fuerza compensación a múltiplos de 10
                - "centena": fuerza compensación a múltiplos de 100
+               - "unidad_de_millar": fuerza compensación a múltiplos de 1000
 
     Returns:
         Dict con la operación original, estrategia usada, pasos detallados
@@ -141,15 +145,25 @@ def compensacion_suma(a: int, b: int, nivel: str = "auto") -> dict:
 
     # Determinar divisor según nivel especificado
     if nivel == "auto":
-        # Auto-detección: centenas para números grandes, decenas para pequeños
-        divisor = 100 if (a >= 100 or b >= 100) else 10
+        # Auto-detección basada en el orden de magnitud del mayor operando
+        max_valor = max(a, b)
+        if max_valor >= 1000:
+            divisor = 1000  # Unidades de millar
+        elif max_valor >= 100:
+            divisor = 100   # Centenas
+        else:
+            divisor = 10    # Decenas
     elif nivel == "decena":
         divisor = 10
     elif nivel == "centena":
         divisor = 100
+    elif nivel == "unidad_de_millar":
+        divisor = 1000
     else:
-        raise ValueError(f"Nivel '{nivel}' no válido. "
-                         f"Use 'auto', 'decena' o 'centena'.")
+        raise ValueError(
+            f"Nivel '{nivel}' no válido. "
+            f"Use 'auto', 'decena', 'centena' o 'unidad_de_millar'."
+        )
 
     # Aplicar compensación con el divisor seleccionado
     paso = _aplicar_compensacion(a, b, divisor)
@@ -195,7 +209,22 @@ if __name__ == "__main__":
     resultado = compensacion_suma(178, 145)
     print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-    # Ejemplo 5: Forzar nivel decena en números grandes
-    print("\n5️⃣ Forzar decena en 178 + 145:")
+    # Ejemplo 5: Unidades de millar
+    print("\n5️⃣ Unidad de millar: 1887 + 1453")
+    resultado = compensacion_suma(1887, 1453)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+
+    # Ejemplo 6: Forzar nivel decena en números grandes
+    print("\n6️⃣ Forzar decena en 178 + 145:")
     print(json.dumps(compensacion_suma(178, 145, nivel="decena"),
+                     indent=2, ensure_ascii=False))
+    
+    # Ejemplo 7: Forzar nivel centena en números pequeños
+    print("\n7️⃣ Forzar centena en 78 + 45:")
+    print(json.dumps(compensacion_suma(78, 45, nivel="centena"),
+                     indent=2, ensure_ascii=False))
+    
+    # Ejemplo 8: Sumandos de diferentes órdenes de magnitud
+    print("\n8️⃣ Diferentes órdenes de magnitud: 945 + 46:")
+    print(json.dumps(compensacion_suma(945, 46),
                      indent=2, ensure_ascii=False))
