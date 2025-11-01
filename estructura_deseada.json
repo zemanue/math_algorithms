@@ -1,25 +1,19 @@
 {
     "ejemplo_decena_superior": {
         "operacion_original": "79 + 25",
-        "operandos": [
-            79,
-            25
-        ],
-        "estrategia": "compensacion",
+        "estrategia": "compensacion_base10",
         "pasos": [
             {
                 "nivel": "decena",
-                "transformacion": {
-                    "operando_principal": {
-                        "original": 79,
-                        "ajustado": 80,
-                        "ajuste": 1
-                    },
-                    "operando_compensado": {
-                        "original": 25,
-                        "ajustado": 24,
-                        "ajuste": -1
-                    }
+                "ajuste": {
+                    "de": 79,
+                    "a": 80,
+                    "cantidad": 1
+                },
+                "compensacion": {
+                    "de": 25,
+                    "a": 24,
+                    "cantidad": -1
                 },
                 "nueva_operacion": "80 + 24",
                 "comentario": "Ajustamos 79 a 80 (sumamos 1) y compensamos el otro sumando de 25 a 24 (restamos 1)."
@@ -29,25 +23,19 @@
     },
     "ejemplo_decena_inferior": {
         "operacion_original": "21 + 26",
-        "operandos": [
-            21,
-            26
-        ],
-        "estrategia": "compensacion",
+        "estrategia": "compensacion_base10",
         "pasos": [
             {
                 "nivel": "decena",
-                "transformacion": {
-                    "operando_principal": {
-                        "original": 21,
-                        "ajustado": 20,
-                        "ajuste": -1
-                    },
-                    "operando_compensado": {
-                        "original": 26,
-                        "ajustado": 27,
-                        "ajuste": 1
-                    }
+                "ajuste": {
+                    "de": 21,
+                    "a": 20,
+                    "cantidad": -1
+                },
+                "compensacion": {
+                    "de": 26,
+                    "a": 27,
+                    "cantidad": 1
                 },
                 "nueva_operacion": "20 + 27",
                 "comentario": "Ajustamos 21 a 20 (restamos 1) y compensamos el otro sumando de 26 a 27 (sumamos 1)."
@@ -57,25 +45,19 @@
     },
     "ejemplo_centena": {
         "operacion_original": "198 + 145",
-        "operandos": [
-            198,
-            145
-        ],
-        "estrategia": "compensacion",
+        "estrategia": "compensacion_base10",
         "pasos": [
             {
                 "nivel": "centena",
-                "transformacion": {
-                    "operando_principal": {
-                        "original": 198,
-                        "ajustado": 200,
-                        "ajuste": 2
-                    },
-                    "operando_compensado": {
-                        "original": 145,
-                        "ajustado": 143,
-                        "ajuste": -2
-                    }
+                "ajuste": {
+                    "de": 198,
+                    "a": 200,
+                    "cantidad": 2
+                },
+                "compensacion": {
+                    "de": 145,
+                    "a": 143,
+                    "cantidad": -2
                 },
                 "nueva_operacion": "200 + 143",
                 "comentario": "Ajustamos 198 a 200 (sumamos 2) y compensamos el otro sumando de 145 a 143 (restamos 2)."
@@ -85,13 +67,55 @@
     },
     "ejemplo_sin_compensacion_necesaria": {
         "operacion_original": "30 + 17",
-        "operandos": [
-            30,
-            17
-        ],
-        "estrategia": "compensacion",
+        "estrategia": "compensacion_base10",
         "pasos": [],
         "resultado_final": 47,
         "nota": "No se requiere compensación porque 30 ya es múltiplo de 10"
+    },
+    "ejemplo_ajuste_pequeno_gana": {
+        "operacion_original": "199 + 220",
+        "estrategia": "compensacion_base10",
+        "pasos": [
+            {
+                "nivel": "centena",
+                "ajuste": {
+                    "de": 199,
+                    "a": 200,
+                    "cantidad": 1
+                },
+                "compensacion": {
+                    "de": 220,
+                    "a": 219,
+                    "cantidad": -1
+                },
+                "nueva_operacion": "200 + 219",
+                "comentario": "Ajustamos 199 a 200 (sumamos 1) y compensamos el otro sumando de 220 a 219 (restamos 1)."
+            }
+        ],
+        "resultado_final": 419,
+        "nota": "El ajuste +1 gana sobre -20 porque es mucho más pequeño (peso: 1 < 10)"
+    },
+    "ejemplo_multiplo_de_10_gana": {
+        "operacion_original": "70 + 83",
+        "estrategia": "compensacion_base10",
+        "pasos": [
+            {
+                "nivel": "centena",
+                "ajuste": {
+                    "de": 70,
+                    "a": 100,
+                    "cantidad": 30
+                },
+                "compensacion": {
+                    "de": 83,
+                    "a": 53,
+                    "cantidad": -30
+                },
+                "nueva_operacion": "100 + 53",
+                "comentario": "Ajustamos 70 a 100 (sumamos 30) y compensamos el otro sumando de 83 a 53 (restamos 30)."
+            }
+        ],
+        "resultado_final": 153,
+        "nota": "El ajuste +30 gana sobre +17 por ser múltiplo de 10 (peso: 15 < 17)"
     }
 }

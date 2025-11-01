@@ -132,30 +132,28 @@ def _aplicar_compensacion(a: int, b: int, divisor: int) -> Optional[dict]:
         nuevo_a, nuevo_b = compensado_ajustado, principal_ajustado
 
     # Generar comentario explicativo
-    verbo_principal = "sumamos" if ajuste_principal > 0 else "restamos"
-    verbo_compensado = "restamos" if ajuste_principal > 0 else "sumamos"
+    oper_principal = "+" if ajuste_principal > 0 else "-"
+    oper_compensado = "-" if ajuste_principal > 0 else "+"
     valor_abs = abs(ajuste_principal)
 
     comentario = (
-        f"Ajustamos {principal_orig} a {principal_ajustado} "
-        f"({verbo_principal} {valor_abs}) y compensamos el otro sumando "
-        f"de {compensado_orig} a {compensado_ajustado} "
-        f"({verbo_compensado} {valor_abs})."
+        f"Ajustamos {principal_orig} → {principal_ajustado} "
+        f"({oper_principal}{valor_abs}) y compensamos "
+        f"de {compensado_orig} → {compensado_ajustado} "
+        f"({oper_compensado}{valor_abs})."
     )
 
     return {
         "nivel": nivel_nombre,
-        "transformacion": {
-            "operando_principal": {
-                "original": principal_orig,
-                "ajustado": principal_ajustado,
-                "ajuste": ajuste_principal,
-            },
-            "operando_compensado": {
-                "original": compensado_orig,
-                "ajustado": compensado_ajustado,
-                "ajuste": ajuste_compensado,
-            }
+        "ajuste": {
+            "de": principal_orig,
+            "a": principal_ajustado,
+            "cantidad": ajuste_principal,
+        },
+        "compensacion": {
+            "de": compensado_orig,
+            "a": compensado_ajustado,
+            "cantidad": ajuste_compensado,
         },
         "nueva_operacion": f"{nuevo_a} + {nuevo_b}",
         "comentario": comentario,
@@ -246,7 +244,6 @@ def compensacion_base10_suma(a: int, b: int, nivel: str = "auto") -> dict:
 
     return {
         "operacion_original": f"{original[0]} + {original[1]}",
-        "operandos": [original[0], original[1]],
         "estrategia": "compensacion_base10",
         "pasos": pasos,
         "resultado_final": resultado_final
