@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo: Acceso Semántico a la Estructura</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .resultado {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .operacion {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .paso {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nivel {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .transformacion {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 8px;
+        }
+
+        .transformacion.ajuste {
+            border-left: 4px solid #28a745;
+        }
+
+        .transformacion.compensacion {
+            border-left: 4px solid #dc3545;
+        }
+
+        .numero {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .flecha {
+            font-size: 28px;
+            color: #667eea;
+            margin: 0 15px;
+        }
+
+        .cantidad {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .cantidad.positivo {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .cantidad.negativo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .comentario {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff8e1;
+            border-radius: 5px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .resultado-final {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #28a745;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-radius: 10px;
+        }
+
+        .etiqueta {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Estrategia para sumar: compensación en base 10</h1>
+        
+        <div class="input-group">
+            <input type="number" id="num1" value="79" placeholder="Primer número">
+            <span class="operacion" style="font-size: 24px; align-self: center;">+</span>
+            <input type="number" id="num2" value="25" placeholder="Segundo número">
+            <button onclick="calcular()">Calcular</button>
+        </div>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function calcular() {
+            const num1 = document.getElementById('num1').value;
+            const num2 = document.getElementById('num2').value;
+            const resultadoDiv = document.getElementById('resultado');
+
+            try {
+                const response = await fetch(
+                    `http://localhost:5000/api/suma/compensacion_base10/${num1}+${num2}`
+                );
+                const data = await response.json();
+
+                let html = `
+                    <div class="operacion">
+                        ${data.operacion_original}
+                    </div>
+                `;
+
+                if (data.pasos.length > 0) {
+                    const paso = data.pasos[0];
+
+                    // Acceso semántico a los datos
+                    const ajusteDe = paso.ajuste.de;
+                    const ajusteA = paso.ajuste.a;
+                    const ajusteCantidad = paso.ajuste.cantidad;
+
+                    const compensacionDe = paso.compensacion.de;
+                    const compensacionA = paso.compensacion.a;
+                    const compensacionCantidad = paso.compensacion.cantidad;
+
+                    html += `
+                        <div class="paso">
+                            <span class="nivel">📐 Nivel: ${paso.nivel}</span>
+
+                            <div class="transformacion ajuste">
+                                <div>
+                                    <div class="etiqueta">🔧 Ajuste</div>
+                                    <div>
+                                        <span class="numero">${ajusteDe}</span>
+                                        <span class="flecha">→</span>
+                                        <span class="numero">${ajusteA}</span>
+                                        <span class="cantidad ${ajusteCantidad > 0 ? 'positivo' : 'negativo'}">
+                                            ${ajusteCantidad > 0 ? '+' : ''}${ajusteCantidad}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="transformacion compensacion">
+                                <div>
+                                    <div class="etiqueta">🔄 Compensación</div>
+                                    <div>
+                                        <span class="numero">${compensacionDe}</span>
+                                        <span class="flecha">→</span>
+                                        <span class="numero">${compensacionA}</span>
+                                        <span class="cantidad ${compensacionCantidad > 0 ? 'positivo' : 'negativo'}">
+                                            ${compensacionCantidad > 0 ? '+' : ''}${compensacionCantidad}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="comentario">
+                                💬 ${paso.comentario}
+                            </div>
+
+                            <div style="margin-top: 15px; text-align: center;">
+                                <p> <strong>📝 Nueva operación: </strong></p>
+                                <p class="operacion">${paso.nueva_operacion}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="paso">
+                            <p style="text-align: center; color: #666;">
+                                ⚠️ No se requiere compensación (uno de los números ya es múltiplo)
+                            </p>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="resultado-final">
+                        ✅ Resultado: ${data.resultado_final}
+                    </div>
+                `;
+
+                resultadoDiv.innerHTML = html;
+
+            } catch (error) {
+                resultadoDiv.innerHTML = `
+                    <div class="resultado">
+                        <p style="color: red;">❌ Error: ${error.message}</p>
+                        <p>Asegúrate de que la API Flask esté corriendo en http://localhost:5000</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Calcular automáticamente al cargar
+        window.addEventListener('load', calcular);
+
+        // Permitir Enter para calcular
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') calcular();
+        });
+    </script>
+</body>
+</html>
