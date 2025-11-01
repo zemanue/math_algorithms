@@ -28,11 +28,11 @@ When assisting in this repository, your goals are:
 ---
 
 ## 🧩 Code Structure Guidelines
-- Each strategy lives in its own Python module (e.g., `strategies/compensation.py`).
-- Common interfaces and base classes should live in `strategies/base.py`.
-- Example scripts for testing should go in `examples/`.
-- Output examples (JSON) may be stored in `samples/` for reference.
-- Keep functions **pure** — no print statements in core logic.
+- Strategy logic in `suma_algoritmos.py` (currently: compensation)
+- API endpoints in `api.py` (Flask REST)
+- Tests in `test_api.py`
+- Keep functions **pure** — no print statements in core logic
+- Future: separate strategies into individual modules
 
 ---
 
@@ -55,18 +55,19 @@ When assisting in this repository, your goals are:
 
 ---
 
-## 🛠️ Future Enhancements
-- Extend compensation to hundreds, thousands, etc.  
-- Add new strategies (e.g., decomposition, rounding, doubling/halving).  
-- Implement subtraction and multiplication reasoning.  
-- Integrate with a lightweight **API layer** (FastAPI) for interactive use.  
-- Add a simple **frontend visualization** later on.
+## 🛠️ Current Status
+- ✅ Compensation strategy with intelligent selection (weight-based ("peso"))
+- ✅ Flask REST API with GET endpoints
+- ✅ Auto-detection: decena/centena/unidad_de_millar
+- ✅ Semantic JSON structure (`ajuste` / `compensacion`)
+- 🔄 Frontend React (in progress)
+- 📚 Future: decomposition, rounding, doubling/halving strategies
 
 ---
 
 ## 🧩 Example Agent Prompt
-> “Create a new strategy class for subtraction using the ‘compensation’ method.  
-> Follow the same JSON structure as in `compensation.py` and document each reasoning step clearly.”
+> "Add a new strategy for decomposition: break down numbers into place values.  
+> Follow the same semantic JSON structure with `ajuste` and `compensacion` fields."
 
 ---
 
